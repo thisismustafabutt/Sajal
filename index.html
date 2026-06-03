@@ -1,0 +1,140 @@
+<!-- ... existing code ... -->
+<style>
+  /* ─── RESET ─── */
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  
+  /* Apply native snap only on mobile so it doesn't fight desktop smooth-scroll */
+  @media (max-width: 768px) {
+    html { scroll-behavior: smooth; scroll-snap-type: y mandatory; }
+  }
+
+  /* ─── VARIABLES ─── */
+<!-- ... existing code ... -->
+```
+
+```html:For Sajal:index.html
+<!-- ... existing code ... -->
+<section class="page" id="page1">
+  <div class="p1-content">
+    <div class="p1-name">Sajal</div>
+    <div class="p1-line">You waited. I wasn't there. I'm sorry.</div>
+  </div>
+  <div class="scroll-hint" style="cursor:pointer;" onclick="scrollToPage('page2')">
+    <span>↓</span>
+    scroll
+  </div>
+</section>
+<!-- ... existing code ... -->
+```
+
+```javascript:For Sajal:index.html
+<!-- ... existing code ... -->
+/* ═══════════════════════════════════
+   8. ACCEPT → CELEBRATION
+═══════════════════════════════════ */
+function onAccept(){
+  // Fade out the Reject button permanently
+  const rejectBtn = document.getElementById('rejectBtn');
+  if (rejectBtn) {
+    rejectBtn.style.transition = 'opacity 0.6s ease';
+    rejectBtn.style.opacity = '0';
+    rejectBtn.style.pointerEvents = 'none'; // Makes it unclickable after fading
+  }
+
+  const p5 = document.getElementById('page5');
+  const p6 = document.getElementById('page6');
+  p6.classList.add('show');
+  
+  // Use our new custom slow-scroll for desktop, native for mobile
+  if (window.innerWidth <= 768) {
+      p6.scrollIntoView({behavior:'smooth'});
+  } else {
+      customScrollTo(p6.offsetTop, 1200);
+  }
+  
+  setTimeout(()=>{
+    const c = document.getElementById('p6content');
+    c.classList.add('show');
+    startFireworks();
+  }, 1000); // Adjusted timing to wait for the slow scroll to finish
+}
+
+/* ═══════════════════════════════════
+   9. FIREWORKS CANVAS
+<!-- ... existing code ... -->
+```
+
+```javascript:For Sajal:index.html
+<!-- ... existing code ... -->
+/* ═══════════════════════════════════
+   11. CUSTOM SMOOTH SCROLL (DESKTOP)
+═══════════════════════════════════ */
+let isScrolling = false;
+
+// Ease-in-out mathematical curve for beautiful slow transitions
+function easeInOutQuad(t, b, c, d) {
+  t /= d / 2;
+  if (t < 1) return c / 2 * t * t + b;
+  t--;
+  return -c / 2 * (t * (t - 2) - 1) + b;
+}
+
+function customScrollTo(targetY, duration) {
+  isScrolling = true;
+  const startY = window.pageYOffset;
+  const distance = targetY - startY;
+  let startTime = null;
+
+  function step(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const progress = timestamp - startTime;
+    const y = easeInOutQuad(progress, startY, distance, duration);
+    window.scrollTo(0, y);
+    if (progress < duration) {
+      requestAnimationFrame(step);
+    } else {
+      window.scrollTo(0, targetY);
+      setTimeout(() => { isScrolling = false; }, 100); 
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+// Global function to allow buttons to use the slow scroll
+function scrollToPage(pageId) {
+   if (window.innerWidth <= 768) {
+       document.getElementById(pageId).scrollIntoView({behavior:'smooth'});
+   } else {
+       const targetY = document.getElementById(pageId).offsetTop;
+       customScrollTo(targetY, 1200); // 1.2 seconds duration
+   }
+}
+
+window.addEventListener('wheel', (e) => {
+  // Let mobile/touch devices handle scrolling natively
+  if (window.innerWidth <= 768) return; 
+
+  e.preventDefault();
+  if (isScrolling) return;
+
+  const sections = Array.from(document.querySelectorAll('.page'));
+  // Calculate which page we are currently on based on viewport
+  let currentIdx = Math.round(window.scrollY / window.innerHeight);
+  
+  let nextIdx = currentIdx;
+  if (e.deltaY > 0 && currentIdx < sections.length - 1) {
+    nextIdx++; // Scroll down
+  } else if (e.deltaY < 0 && currentIdx > 0) {
+    nextIdx--; // Scroll up
+  }
+  
+  if (nextIdx !== currentIdx) {
+    const targetY = sections[nextIdx].offsetTop;
+    // 1200ms = 1.2 seconds smooth, elegant glide
+    customScrollTo(targetY, 1200); 
+  }
+}, {passive: false});
+
+</script>
+</body>
+</html>
